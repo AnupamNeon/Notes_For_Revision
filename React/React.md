@@ -139,7 +139,8 @@ function App() {
 export default App;
 ```
 
-> React.StrictMode Behavior:
+```
+React.StrictMode Behavior:
 ├── Development Only (no effect in production)
 ├── Helps find bugs by:
 │   ├── Double-invoking components (render twice)
@@ -156,7 +157,7 @@ export default App;
     ├── "Why is my useEffect running twice?"
     ├── "Why is my console.log appearing twice?"
     └── Answer: StrictMode is doing its job!
-
+```
     
 ```jsx
 // Example: This will log TWICE in development with StrictMode
@@ -513,17 +514,6 @@ UserProfile.propTypes = {
     country: PropTypes.string
   })
 };
-```
-
-### TypeScript Alternative
-
-```ts
-interface UserProfileProps {
-  name: string;
-  age?: number;
-  email: string;
-  isAdmin?: boolean;
-}
 ```
 
 ### Reusable Button Component
@@ -2082,7 +2072,7 @@ function ProtectedRoute({ children }) {
 <Component {...props} />
 ```
 
-## 13. **Redux Toolkit (RTK) - The Modern Way to Use Redux **
+## 13. Redux Toolkit (RTK) - The Modern Way to Use Redux
 
 ---
 
@@ -2204,8 +2194,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 ### 🌐 **Async Logic using createAsyncThunk**
 
----
-
 ### **postsSlice.js**
 
 ```js
@@ -2285,7 +2273,6 @@ export function PostsList() {
 
 ```js
 // src/features/api/apiSlice.js
-// ============================================
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const apiSlice = createApi({
@@ -2342,10 +2329,10 @@ export const {
   useGetPostsQuery,
   useCreatePostMutation,
 } = apiSlice;
+```
 
-
+```js
 // src/app/store.js
-// ============================================
 import { configureStore } from '@reduxjs/toolkit';
 import counterReducer from '../features/counter/counterSlice';
 import { apiSlice } from '../features/api/apiSlice';
@@ -2360,10 +2347,10 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiSlice.middleware),
 });
+```
 
-
-// Usage Example in Component
-// ============================================
+**Usage Example in Component**
+```js
 import { useGetPostsQuery, useCreatePostMutation } from '../features/api/apiSlice';
 
 function PostsList() {
@@ -2409,17 +2396,28 @@ function PostsList() {
 
 ## 14. Testing & Performance in React
 
-### Testing Pyramid in React Apps
+### Testing Pyramid for React Applications
 
+A well-balanced test suite follows the **testing pyramid** principle:
+
+```text
+E2E Tests (Cypress, Playwright)          ~5–10%
+Integration Tests (React Testing Library) ~20–30%
+Unit Tests (Jest + RTL)                  ~60–80%
 ```
-E2E Tests       (Cypress, Playwright)      ~5-10%
-Integration     (React Testing Library)    ~20-30%
-Unit Tests      (Jest + RTL)              ~60-80%
-```
 
-### 1. React Testing Library (RTL) – Recommended by React Team
+- **Unit Tests** — Test individual components or pure functions
+- **Integration Tests** — Test how multiple components work together
+- **E2E Tests** — Test complete user flows in a real browser
 
-**Philosophy:** Test like a user — query DOM the way users see it.
+---
+
+### 1. React Testing Library (RTL)
+
+**Officially recommended by the React team**
+
+**Core Philosophy:**
+> Write tests that resemble how real users interact with your application — query the DOM, not implementation details.
 
 #### Installation
 
@@ -2427,305 +2425,266 @@ Unit Tests      (Jest + RTL)              ~60-80%
 npm install --save-dev @testing-library/react @testing-library/jest-dom @testing-library/user-event
 ```
 
-#### Setup (jest.setup.js)
+#### Setup (`jest.setup.js`)
 
 ```js
-// jest.setup.js
 import '@testing-library/jest-dom';
 ```
 
-Add to `package.json` or jest.config.js`:
+Add to `jest.config.js` (or `package.json`):
 
 ```json
-"jest": {
-  "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"]
+{
+  "jest": {
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"]
+  }
 }
 ```
 
-#### Core Principles & Queries Priority
+---
 
-```jsx
-// BEST - Queries accessible to everyone (screen + getByRole)
+#### Query Priority (Most → Least Recommended)
+
+Always prefer queries that reflect real user behavior:
+
+```tsx
+// 1. Best — Accessible & user-facing
 screen.getByRole('button', { name: /submit/i })
 screen.getByRole('heading', { name: 'Welcome' })
 
-// Good
-getByLabelText, getByPlaceholderText, getByText
+// 2. Good
+screen.getByLabelText('Email')
+screen.getByPlaceholderText('Enter password')
+screen.getByText('Login')
 
-// Less good (use only when necessary)
-getByTestId
+// 3. Only when necessary
+screen.getByTestId('submit-button')
 
-// NEVER use these in most cases
-getByClass, getById, container queries
+// Avoid — too tied to implementation
+screen.getByTitle(), getByClassName(), querySelector()
 ```
 
-#### Example Tests
+---
+
+### Example Component Tests
+
+#### Counter Component
 
 ```tsx
-// Counter.test.tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import Counter from './Counter';
-
 test('increments and decrements count', async () => {
-  const user = userEvent.setup();
-  render(<Counter />);
+  const user = userEvent.setup()
+  render(<Counter />)
 
-  const incrementBtn = screen.getByRole('button', { name: 'plus' });
-  const decrementBtn = screen.getByRole('button', { name: 'minus' });
-  const countDisplay = screen.getByText('0');
+  const increment = screen.getByRole('button', { name: 'plus' })
+  const decrement = screen.getByRole('button', { name: 'minus' })
 
-  expect(countDisplay).toBeInTheDocument();
+  await user.click(increment)
+  expect(screen.getByText('1')).toBeInTheDocument()
 
-  await user.click(incrementBtn);
-  expect(screen.getByText('1')).toBeInTheDocument();
-
-  await user.click(decrementBtn);
-  expect(screen.getByText('0')).toBeInTheDocument();
-});
+  await user.click(decrement)
+  expect(screen.getByText('0')).toBeInTheDocument()
+})
 ```
 
+#### Form Validation
+
 ```tsx
-// LoginForm.test.tsx
 test('shows validation errors on submit', async () => {
-  const user = userEvent.setup();
-  render(<LoginForm />);
+  const user = userEvent.setup()
+  render(<LoginForm />)
 
-  await user.click(screen.getByRole('button', { name: /login/i }));
+  await user.click(screen.getByRole('button', { name: /login/i }))
 
-  expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
-  expect(screen.getByText(/password is required/i)).toBeInTheDocument();
-});
+  expect(await screen.findByText(/email is required/i)).toBeInTheDocument()
+  expect(screen.getByText(/password is required/i)).toBeInTheDocument()
+})
 ```
 
-#### Testing Custom Hooks (with @testing-library/react-hooks → now use @testing-library/react)
+---
 
-```jsx
-// @testing-library/react v13.1+
-// ============================================
+### Testing Custom Hooks (Modern Approach)
 
-// NEW WAY:
-import { renderHook, act } from '@testing-library/react';
+Use `@testing-library/react`'s `renderHook`.
 
-// ============================================
-// useCounter.js
-// ============================================
-import { useState, useCallback } from 'react';
+#### Hook Example
 
+```tsx
 export function useCounter(initialValue = 0) {
-  const [count, setCount] = useState(initialValue);
-  
-  const increment = useCallback(() => setCount(c => c + 1), []);
-  const decrement = useCallback(() => setCount(c => c - 1), []);
-  const reset = useCallback(() => setCount(initialValue), [initialValue]);
-  
-  return { count, increment, decrement, reset };
+  const [count, setCount] = useState(initialValue)
+
+  return {
+    count,
+    increment: () => setCount(c => c + 1),
+    decrement: () => setCount(c => c - 1),
+    reset: () => setCount(initialValue),
+  }
 }
-
-// ============================================
-// useCounter.test.js
-// ============================================
-import { renderHook, act } from '@testing-library/react';
-import { useCounter } from './useCounter';
-
-describe('useCounter', () => {
-  test('should initialize with default value', () => {
-    const { result } = renderHook(() => useCounter());
-    expect(result.current.count).toBe(0);
-  });
-
-  test('should initialize with provided value', () => {
-    const { result } = renderHook(() => useCounter(10));
-    expect(result.current.count).toBe(10);
-  });
-
-  test('should increment counter', () => {
-    const { result } = renderHook(() => useCounter());
-
-    act(() => {
-      result.current.increment();
-    });
-
-    expect(result.current.count).toBe(1);
-  });
-
-  test('should decrement counter', () => {
-    const { result } = renderHook(() => useCounter(5));
-
-    act(() => {
-      result.current.decrement();
-    });
-
-    expect(result.current.count).toBe(4);
-  });
-
-  test('should reset counter', () => {
-    const { result } = renderHook(() => useCounter(10));
-
-    act(() => {
-      result.current.increment();
-      result.current.increment();
-    });
-
-    expect(result.current.count).toBe(12);
-
-    act(() => {
-      result.current.reset();
-    });
-
-    expect(result.current.count).toBe(10);
-  });
-});
 ```
 
-### 2. Jest Tips & Matchers
+#### Hook Test
 
 ```tsx
-// Common RTL + Jest-DOM matchers
-expect(element).toBeInTheDocument();
-expect(element).toHaveTextContent('Hello');
-expect(element).toBeVisible();
-expect(element).toBeDisabled();
-expect(input).toHaveValue('john@example.com');
-expect(element).toHaveClass('active');
-expect(screen.getByTestId('alert')).toHaveAttribute('role', 'alert');
+import { renderHook, act } from '@testing-library/react'
+
+test('should increment counter', () => {
+  const { result } = renderHook(() => useCounter())
+
+  act(() => result.current.increment())
+  expect(result.current.count).toBe(1)
+})
 ```
 
-### 3. Mocking in Tests
+---
+
+### 2. Useful Jest + RTL Matchers
 
 ```tsx
-// Mock API call
+expect(element).toBeInTheDocument()
+expect(element).toHaveTextContent('Hello')
+expect(element).toBeVisible()
+expect(element).toBeDisabled()
+expect(input).toHaveValue('john@example.com')
+expect(element).toHaveClass('active')
+expect(screen.getByTestId('alert')).toHaveAttribute('role', 'alert')
+```
+
+---
+
+### 3. Mocking in Jest
+
+#### Mock API Calls
+
+```tsx
 jest.mock('../api', () => ({
   fetchUser: jest.fn(),
-}));
+}))
+```
 
-// Mock module
+#### Mock React Router
+
+```tsx
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => jest.fn(),
-}));
+  useParams: () => ({ id: '123' }),
+}))
 ```
+
+---
 
 ### 4. Performance Optimization in React
 
-| Problem                        | Solution                                      | Tool/Hook Used                     |
-|-------------------------------|-----------------------------------------------|------------------------------------|
-| Unnecessary re-renders        | `React.memo`, `useMemo`, `useCallback`        | React DevTools Profiler            |
-| Expensive child components    | Wrap with `React.memo`                       | `React.memo(Component)`            |
-| Large lists                  | Virtualization (react-window, tanstack/virtual)| `FixedSizeList`, `VariableSizeList`|
-| Heavy computations            | Memoize result                                | `useMemo`                          |
-| Frequent callback recreation  | Memoize function                              | `useCallback`                      |
-| Context re-renders everything | Split context / use selector pattern          | `useContextSelector` or memo      |
+| Problem                        | Solution                                      | Tools / Hooks                     |
+|--------------------------------|-----------------------------------------------|-----------------------------------|
+| Unnecessary re-renders         | `React.memo`, `useMemo`, `useCallback`       | React DevTools Profiler           |
+| Expensive child components     | Wrap with `React.memo`                        | `React.memo()`                    |
+| Large lists / tables           | Virtualization                                | `react-window`, TanStack Virtual |
+| Heavy calculations             | Memoize results                               | `useMemo`                         |
+| Functions recreated on render  | Memoize callbacks                             | `useCallback`                     |
+| Context triggering re-renders  | Split contexts or use selectors               | `useContextSelector`              |
 
-#### React.memo – Prevent Re-renders
-
-```tsx
-const ExpensiveItem = React.memo(function ExpensiveItem({ item, onClick }) {
-  console.log('Rendering item', item.id);
-  return <div onClick={onClick}>{item.name}</div>;
-});
-
-// Only re-renders if props change
-```
-
-#### useMemo & useCallback – Real Example
+#### React.memo Example
 
 ```tsx
-const expensiveValue = useMemo(() => {
-  return heavyCalculation(data);
-}, [data]);
-
-const filteredItems = useMemo(() => {
-  return items.filter(item => item.active);
-}, [items]);
+const ExpensiveItem = React.memo(({ item, onClick }) => {
+  return <div onClick={onClick}>{item.name}</div>
+})
+// Re-renders only when `item` or `onClick` actually change
 ```
 
-#### useCallback – Essential for Child Components
+#### useMemo Example
+
+```tsx
+const expensiveValue = useMemo(() => heavyCalculation(data), [data])
+const filteredItems = useMemo(() => items.filter(i => i.active), [items])
+```
+
+#### useCallback Example
 
 ```tsx
 const handleSave = useCallback((data) => {
-  saveToServer(data);
-}, []); // No dependencies → stable reference
-
-// Now <Child onSave={handleSave} /> won't re-render unnecessarily
+  saveToServer(data)
+}, [])
 ```
 
-#### React DevTools Profiler (Must Know!)
+---
 
-1. Open React DevTools → Profiler tab
-2. Click Record
-3. Interact with app
-4. Stop recording → see flamegraph
-5. Look for yellow/red bars = slow renders
+### React DevTools Profiler (Essential Tool)
 
-**Pro Tip:** Enable "Highlight updates when components render" to see green/red boxes on re-renders.
+1. Open React DevTools → **Profiler** tab  
+2. Click **Record** (red circle)  
+3. Interact with your app  
+4. Stop recording  
+5. Yellow/red flames = slow renders  
 
-#### Virtualization – For Long Lists
+**Pro Tip:** Enable **“Highlight updates when components render”** to visually see re-renders.
+
+---
+
+### Virtualized Lists (react-window)
 
 ```bash
 npm install react-window
 ```
 
 ```tsx
-import { FixedSizeList } from 'react-window';
+import { FixedSizeList } from 'react-window'
 
-function VirtualizedList({ items }) {
-  const Row = ({ index, style }) => (
-    <div style={style}>
-      {items[index].name}
-    </div>
-  );
+const Row = ({ index, style }) => (
+  <div style={style}>{items[index].name}</div>
+)
 
-  return (
-    <FixedSizeList
-      height={600}
-      width={400}
-      itemCount={items.length}
-      itemSize={60}
-    >
-      {Row}
-    </FixedSizeList>
-  );
-}
+<FixedSizeList
+  height={600}
+  width={400}
+  itemCount={items.length}
+  itemSize={60}
+>
+  {Row}
+</FixedSizeList>
 ```
 
-### Performance Cheat Sheet
+---
 
-| Tool/Hook             | When to Use                                             |
-|-----------------------|----------------------------------------------------------|
-| `React.memo`                | Pure presentational components with props                |
-| `useMemo`             | Expensive calculations, object/array references         |
-| `useCallback`         | Passing callbacks to memoized children                  |
-| `useMemo` + `useCallback` | When child is wrapped in `React.memo`                |
-| React Window         | Lists with 100+ items                                   |
-| TanStack Virtual     | Modern alternative (supports variable heights)          |
-| Code Splitting        | `React.lazy` + `Suspense` for route-based loading      |
-| Profiler API          | `<Profiler id="App" onRender={callback}>`              |
+### Performance Quick Reference
 
-### Bonus: Common Testing + Performance Patterns
+| Tool / Hook         | Use When                                           |
+|---------------------|----------------------------------------------------|
+| `React.memo`        | Child component re-renders with same props         |
+| `useMemo`           | Expensive computations or stable references        |
+| `useCallback`       | Passing callbacks to memoized children             |
+| `react-window`      | Lists with 100+ items                              |
+| `React.lazy + Suspense` | Lazy-load routes or heavy components           |
+| Profiler API        | Measuring real-world render performance            |
+
+---
+
+### Bonus: Common Performance Patterns
+
+#### Lazy Loading Routes
 
 ```tsx
-// 1. Lazy Loading Routes
-const Dashboard = React.lazy(() => import('./Dashboard'));
-const Profile = React.lazy(() => import('./Profile'));
+const Dashboard = React.lazy(() => import('./Dashboard'))
 
-<Suspense fallback={<Loading />}>
+<Suspense fallback={<div>Loading...</div>}>
   <Routes>
     <Route path="/dashboard" element={<Dashboard />} />
   </Routes>
 </Suspense>
+```
 
-// 2. Memoized Selector (if using Redux)
-import { createSelector } from '@reduxjs/toolkit';
+#### Memoized Redux Selectors (Reselect)
+
+```tsx
+import { createSelector } from '@reduxjs/toolkit'
 
 const selectExpensiveData = createSelector(
   state => state.items,
-  items => heavyFilter(items)
-);
+  items => items.filter(heavyFilter)
+)
 ```
----
 
-## **15. Advanced React Patterns**
+## 15. Advanced React Patterns
 
 ### 🔥 1. Compound Components Pattern (JavaScript)
 
@@ -3033,6 +2992,7 @@ class ErrorBoundary extends React.Component {
 export default ErrorBoundary;
 ```
 
+```
 Error Boundaries DO catch:
 ├── Errors in render methods
 ├── Errors in lifecycle methods
@@ -3045,12 +3005,10 @@ Error Boundaries DO NOT catch:
 ├── Server-side rendering (SSR)
 ├── Errors thrown in the error boundary itself
 └── Errors in useEffect (partially - depends on timing)
-
+```
 
 ```jsx
-// ============================================
 // Handling errors that Error Boundaries DON'T catch
-// ============================================
 
 function ButtonWithEventError() {
   const handleClick = () => {
@@ -3087,10 +3045,10 @@ function ComponentWithAsyncError() {
   if (error) return <div>Error: {error.message}</div>;
   return <div>Data loaded</div>;
 }
+```
 
-// ============================================
+``` jsx
 // Usage
-// ============================================
 function App() {
   return (
     <ErrorBoundary fallback={<div>Something went wrong!</div>}>
